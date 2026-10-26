@@ -1,0 +1,3 @@
+[submodule "vendor/selfphoneng"]
+	path = vendor/selfphoneng
+	url = https://git.dou.bet/spng/selfphoneng.git
