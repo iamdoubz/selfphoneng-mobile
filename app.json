@@ -28,9 +28,25 @@
         "expo-camera",
         {
           "cameraPermission": "$(PRODUCT_NAME) uses the camera to scan the pairing QR code.",
-          "microphonePermission": false,
+          "microphonePermission": "$(PRODUCT_NAME) uses the microphone for your phone calls.",
           "recordAudioAndroid": false,
           "barcodeScannerEnabled": true
+        }
+      ],
+      [
+        "expo-callkit-telecom",
+        {
+          "microphonePermission": "$(PRODUCT_NAME) uses the microphone for your phone calls.",
+          "cameraPermission": false,
+          "supportsVideo": false,
+          "includesCallsInRecents": true
+        }
+      ],
+      [
+        "@config-plugins/react-native-webrtc",
+        {
+          "microphonePermission": "$(PRODUCT_NAME) uses the microphone for your phone calls.",
+          "cameraPermission": "$(PRODUCT_NAME) uses the camera to scan the pairing QR code."
         }
       ]
     ]

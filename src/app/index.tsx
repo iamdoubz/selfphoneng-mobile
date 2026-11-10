@@ -1,11 +1,14 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Home: who this phone is paired as. Calls, voicemail, contacts and settings come in MB4–MB8.
+// Home: who this phone is paired as, and the phone (MB4). History, voicemail, contacts and
+// settings come in MB5–MB8.
 import type { MeDto } from '@selfphoneng/shared';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { Redirect } from 'expo-router';
 import { useState } from 'react';
-import { Button, StyleSheet, Text, View } from 'react-native';
+import { Button, ScrollView, StyleSheet, Text } from 'react-native';
 import { api, signOut } from '../api';
+import { Phone } from '../calls/Phone';
+import { stopPhone } from '../calls/native';
 import { useSession } from '../session';
 
 export default function Home() {
@@ -19,7 +22,7 @@ export default function Home() {
   });
   if (!session) return <Redirect href="/pair" />;
   return (
-    <View style={styles.page}>
+    <ScrollView contentContainerStyle={styles.page}>
       <Text style={styles.name}>{session.name}</Text>
       <Text>{session.email}</Text>
       <Text style={styles.muted}>{session.server}</Text>
@@ -29,6 +32,7 @@ export default function Home() {
         </Text>
       )}
       {me.error && <Text style={styles.error}>{me.error.message}</Text>}
+      {me.data?.extension && <Phone />}
       <Text style={styles.muted}>
         Calls ring here only while the app is open. For calls you can’t miss, forward unanswered
         calls to your mobile number in My settings.
@@ -38,11 +42,13 @@ export default function Home() {
         disabled={leaving}
         onPress={async () => {
           setLeaving(true);
+          // Unregister first: the token it needs is gone after signing out.
+          await stopPhone().catch(() => {});
           await signOut().catch(() => {});
           qc.clear();
         }}
       />
-    </View>
+    </ScrollView>
   );
 }
 
