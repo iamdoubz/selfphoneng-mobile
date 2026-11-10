@@ -4,7 +4,10 @@ The Android and iPhone app for [SelfPhoneNG](https://git.dou.bet/spng/selfphonen
 self-hosted business phone system. One Expo (React Native) codebase for both. What it does and
 the order of work: the PBX repo's `docs/spec/13-mobile.md`.
 
-Status: pairing with a PBX (MB3). Calls, history, voicemail, contacts and settings come next.
+Status: pairing with a PBX (MB3) and calls (MB4): a dial pad, calls in and out, hold, mute,
+keypad and speaker, with the phone's own call screen. **Calls haven't been tried on a real phone
+yet.** History, voicemail, contacts and settings come next. Calls ring only while the app is
+open.
 
 ## Get the code
 
