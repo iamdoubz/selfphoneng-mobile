@@ -1,0 +1,22 @@
+{
+  "project": "selfphoneng-mobile",
+  "platform": "ios",
+  "github": {
+    "owner": "iamdoubz",
+    "repo": "selfphoneng-mobile"
+  },
+  "provider": "github",
+  "codemagic": {},
+  "bitrise": {},
+  "ios": {
+    "path": "ios"
+  },
+  "flutter": {
+    "watch": {}
+  },
+  "reactNative": {
+    "expo": true
+  },
+  "kmp": {},
+  "mobai": {}
+}
