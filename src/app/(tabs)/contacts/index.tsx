@@ -3,18 +3,10 @@
 import type { ContactDto } from '@selfphoneng/shared';
 import { Stack, router } from 'expo-router';
 import { useMemo, useState } from 'react';
-import {
-  ActivityIndicator,
-  Pressable,
-  RefreshControl,
-  SectionList,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, Pressable, SectionList, StyleSheet, Text, View } from 'react-native';
 import { useContacts } from '../../../data';
 import { Avatar } from '../../../ui/Avatar';
-import { Empty } from '../../../ui/List';
+import { Empty, usePullRefresh } from '../../../ui/List';
 import { space, useColors } from '../../../ui/theme';
 
 const letter = (name: string) => {
@@ -34,6 +26,7 @@ function matches(c: ContactDto, q: string) {
 export default function Contacts() {
   const c = useColors();
   const book = useContacts();
+  const refresh = usePullRefresh(book.refetch);
   const [search, setSearch] = useState('');
   const sections = useMemo(() => {
     const q = search.trim().toLowerCase();
@@ -108,9 +101,7 @@ export default function Contacts() {
             />
           )
         }
-        refreshControl={
-          <RefreshControl refreshing={book.isRefetching} onRefresh={() => void book.refetch()} />
-        }
+        refreshControl={refresh}
       />
     </>
   );

@@ -4,20 +4,12 @@ import type { ListResponse, MyCallDto } from '@selfphoneng/shared';
 import { useInfiniteQuery } from '@tanstack/react-query';
 import { Stack } from 'expo-router';
 import { useState } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  RefreshControl,
-  StyleSheet,
-  Text,
-  View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { api } from '../../../api';
 import { dial } from '../../../calls/Phone';
 import { useNames } from '../../../data';
 import { duration, phoneNumber, when } from '../../../ui/format';
-import { Empty, Icon } from '../../../ui/List';
+import { Empty, Icon, usePullRefresh } from '../../../ui/List';
 import { space, useColors } from '../../../ui/theme';
 
 const other = (c: MyCallDto) => (c.myRole === 'out' ? c.toNumber : c.fromNumber);
@@ -118,6 +110,7 @@ export default function Calls() {
     getNextPageParam: (p) => p.nextCursor ?? undefined,
     refetchInterval: 60_000,
   });
+  const refresh = usePullRefresh(q.refetch);
   const all = q.data?.pages.flatMap((p) => p.items) ?? [];
   const items = missed ? all.filter((x) => x.missedByMe) : all;
   return (
@@ -158,12 +151,7 @@ export default function Calls() {
           q.isFetchingNextPage ? <ActivityIndicator style={styles.more} /> : undefined
         }
         onEndReached={() => q.hasNextPage && !q.isFetchingNextPage && q.fetchNextPage()}
-        refreshControl={
-          <RefreshControl
-            refreshing={q.isRefetching && !q.isFetchingNextPage}
-            onRefresh={() => void q.refetch()}
-          />
-        }
+        refreshControl={refresh}
       />
     </>
   );
