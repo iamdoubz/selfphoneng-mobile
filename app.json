@@ -6,7 +6,7 @@
     "scheme": "selfphoneng",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "bet.dou.selfphoneng",
       "supportsTablet": true
@@ -14,7 +14,7 @@
     "android": {
       "package": "bet.dou.selfphoneng",
       "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
+        "backgroundColor": "#090E21",
         "foregroundImage": "./assets/android-icon-foreground.png",
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
@@ -48,7 +48,8 @@
           "microphonePermission": "$(PRODUCT_NAME) uses the microphone for your phone calls.",
           "cameraPermission": "$(PRODUCT_NAME) uses the camera to scan the pairing QR code."
         }
-      ]
+      ],
+      "expo-audio"
     ]
   }
 }

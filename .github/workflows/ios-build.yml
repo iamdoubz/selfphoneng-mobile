@@ -201,9 +201,11 @@ jobs:
         id: cache-deriveddata
         with:
           path: DerivedData
-          key: deriveddata-${{ github.run_id }}
+          # Keyed by the lockfile: precompiled modules from other native versions break the build
+          # ("has been modified since the module file was built") or the app at launch.
+          key: deriveddata-${{ hashFiles('package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'bun.lock', 'pubspec.lock') }}-${{ github.run_id }}
           restore-keys: |
-            deriveddata-
+            deriveddata-${{ hashFiles('package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'bun.lock', 'pubspec.lock') }}-
 
       - name: Detect project type
         id: detect
@@ -1292,7 +1294,7 @@ jobs:
         if: always() && steps.dd.outputs.exists == 'yes'
         with:
           path: DerivedData
-          key: deriveddata-${{ github.run_id }}
+          key: deriveddata-${{ hashFiles('package-lock.json', 'yarn.lock', 'pnpm-lock.yaml', 'bun.lock', 'pubspec.lock') }}-${{ github.run_id }}
 
       - name: Cleanup signing
         if: always() && steps.params.outputs.use_signing == 'true'
