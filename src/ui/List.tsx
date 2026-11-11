@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Inset grouped lists, as in the phone's Settings: a rounded card of rows with hairlines between.
 import { SymbolView, type SymbolViewProps } from 'expo-symbols';
-import { Children, Fragment, type ReactNode } from 'react';
+import { Children, Fragment, useState, type ReactNode } from 'react';
 import {
   Pressable,
+  RefreshControl,
   StyleSheet,
   Text,
   View,
@@ -14,6 +15,21 @@ import {
 import { radius, space, useColors } from './theme';
 
 export type IconName = SymbolViewProps['name'];
+
+// Pull to refresh that spins only for a pull. Tied to the query's own refetching, it opened
+// on every background reload too, and on iPhone that pushes the large title halfway down.
+export function usePullRefresh(refetch: () => Promise<unknown>) {
+  const [pulling, setPulling] = useState(false);
+  return (
+    <RefreshControl
+      refreshing={pulling}
+      onRefresh={() => {
+        setPulling(true);
+        void refetch().finally(() => setPulling(false));
+      }}
+    />
+  );
+}
 
 export function Icon({
   name,

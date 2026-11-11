@@ -10,7 +10,6 @@ import {
   Alert,
   FlatList,
   Pressable,
-  RefreshControl,
   StyleSheet,
   Text,
   View,
@@ -20,7 +19,7 @@ import { dial } from '../../../calls/Phone';
 import { unheard, useNames, useVoicemail } from '../../../data';
 import { useSession } from '../../../session';
 import { duration, phoneNumber, when } from '../../../ui/format';
-import { Empty, Icon } from '../../../ui/List';
+import { Empty, Icon, usePullRefresh } from '../../../ui/List';
 import { radius, space, useColors } from '../../../ui/theme';
 
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
@@ -179,6 +178,7 @@ function Message({
 export default function Voicemail() {
   const c = useColors();
   const q = useVoicemail();
+  const refresh = usePullRefresh(q.refetch);
   const names = useNames();
   const [open, setOpen] = useState<string | null>(null);
   return (
@@ -214,9 +214,7 @@ export default function Voicemail() {
             />
           )
         }
-        refreshControl={
-          <RefreshControl refreshing={q.isRefetching} onRefresh={() => void q.refetch()} />
-        }
+        refreshControl={refresh}
       />
     </>
   );
