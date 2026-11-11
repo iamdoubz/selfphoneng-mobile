@@ -22,6 +22,20 @@ Native packages.
 - Open source only (PBX hard rule 4). New dependencies are listed in 13 §1 with the reason.
 - Never log the device token, SIP password or voicemail audio.
 
+## Git: GitHub first, then git.dou.bet
+
+GitHub (`origin`, `github.com/iamdoubz/selfphoneng-mobile`) is the main repo: the iOS builds
+(`builder`) run there. git.dou.bet (`dou`, `git.dou.bet/spng/mobile`) is a backup.
+
+1. Commit on a new branch, never on `main`.
+2. Push the branch to GitHub: `git push -u origin <branch>`.
+3. Then to git.dou.bet: `git push dou <branch>`.
+4. The pull request is opened and merged on GitHub.
+5. Pull `main` from GitHub, then `git push dou main`; delete the merged branch.
+
+Never `--force` or `--mirror`, and no push mirror between the two: a Gitea push mirror once
+overwrote GitHub, deleting its branches and commits.
+
 ## Before saying a task is done
 
 ```bash
