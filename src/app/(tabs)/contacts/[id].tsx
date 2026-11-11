@@ -26,7 +26,7 @@ export default function Contact() {
     <ScrollView contentInsetAdjustmentBehavior="automatic" style={{ backgroundColor: c.bg }}>
       <Stack.Screen options={{ title: '', headerLargeTitle: false }} />
       <View style={styles.head}>
-        <Avatar name={contact.name} size={96} />
+        <Avatar name={contact.name} photo={contact.photo} size={96} />
         <Text style={[styles.name, { color: c.text }]}>{contact.name}</Text>
         {!!contact.company && (
           <Text style={[styles.company, { color: c.muted }]}>{contact.company}</Text>

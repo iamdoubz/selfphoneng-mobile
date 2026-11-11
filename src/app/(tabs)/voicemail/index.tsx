@@ -16,8 +16,9 @@ import {
 } from 'react-native';
 import { api } from '../../../api';
 import { dial } from '../../../calls/Phone';
-import { unheard, useNames, useVoicemail } from '../../../data';
+import { unheard, useContactOf, useVoicemail } from '../../../data';
 import { useSession } from '../../../session';
+import { Avatar } from '../../../ui/Avatar';
 import { duration, phoneNumber, when } from '../../../ui/format';
 import { Empty, Icon, usePullRefresh } from '../../../ui/List';
 import { radius, space, useColors } from '../../../ui/theme';
@@ -87,11 +88,13 @@ function Player({ vm, onError }: { vm: VoicemailDto; onError: (m: string) => voi
 function Message({
   vm,
   name,
+  photo,
   open,
   onOpen,
 }: {
   vm: VoicemailDto;
   name: string | null;
+  photo: string | null;
   open: boolean;
   onOpen: () => void;
 }) {
@@ -122,6 +125,7 @@ function Message({
         style={styles.head}
       >
         <View style={[styles.dot, { backgroundColor: unheard(vm) ? c.tint : 'transparent' }]} />
+        <Avatar name={title} photo={photo} size={40} />
         <View style={styles.headText}>
           <Text numberOfLines={1} style={[styles.name, { color: c.text }]}>
             {title}
@@ -179,7 +183,7 @@ export default function Voicemail() {
   const c = useColors();
   const q = useVoicemail();
   const refresh = usePullRefresh(q.refetch);
-  const names = useNames();
+  const contactOf = useContactOf();
   const [open, setOpen] = useState<string | null>(null);
   return (
     <>
@@ -190,14 +194,18 @@ export default function Voicemail() {
         contentContainerStyle={styles.list}
         data={q.data?.items ?? []}
         keyExtractor={(x) => x.id}
-        renderItem={({ item }) => (
-          <Message
-            vm={item}
-            name={item.callerName ?? names(item.callerNumber)}
-            open={open === item.id}
-            onOpen={() => setOpen(open === item.id ? null : item.id)}
-          />
-        )}
+        renderItem={({ item }) => {
+          const who = contactOf(item.callerNumber);
+          return (
+            <Message
+              vm={item}
+              name={item.callerName ?? who?.name ?? null}
+              photo={who?.photo ?? null}
+              open={open === item.id}
+              onOpen={() => setOpen(open === item.id ? null : item.id)}
+            />
+          );
+        }}
         ListHeaderComponent={
           q.error ? (
             <Text style={[styles.error, { color: c.red }]}>{q.error.message}</Text>

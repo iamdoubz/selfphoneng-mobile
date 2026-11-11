@@ -1,7 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // The queries more than one screen uses (spec 13 §4).
 import type {
+  AboutDto,
+  AuthUser,
   ContactBookDto,
+  ContactDto,
   ListResponse,
   MeDto,
   MeUpdate,
@@ -35,16 +38,38 @@ export const useContacts = () =>
     enabled: usePaired(),
   });
 
-/** A number's name from my books, for calls the PBX only knows by number. */
-export function useNames(): (n: string | null | undefined) => string | null {
+/** A number's contact from my books (its name and photo), for calls the PBX only knows by number. */
+export function useContactOf(): (n: string | null | undefined) => ContactDto | null {
   const { data } = useContacts();
   return useMemo(() => {
-    const map = new Map<string, string>();
+    const map = new Map<string, ContactDto>();
     for (const c of data?.items ?? [])
-      for (const { number } of c.numbers) map.set(numberKey(number), c.name);
+      for (const { number } of c.numbers) map.set(numberKey(number), c);
     return (n) => (n ? (map.get(numberKey(n)) ?? null) : null);
   }, [data]);
 }
+
+export function useNames(): (n: string | null | undefined) => string | null {
+  const of = useContactOf();
+  return (n) => of(n)?.name ?? null;
+}
+
+/** Signed-in me as the web sees me: here for my photo, which MeDto doesn't carry. */
+export const useAuthMe = () =>
+  useQuery({
+    queryKey: ['auth-me'],
+    queryFn: () => api<{ user: AuthUser }>('GET', '/api/auth/me').then((r) => r.user),
+    enabled: usePaired(),
+  });
+
+/** The PBX's version (public, 08 §4). */
+export const useAbout = () =>
+  useQuery({
+    queryKey: ['about'],
+    queryFn: () => api<AboutDto>('GET', '/api/about'),
+    staleTime: Infinity,
+    enabled: usePaired(),
+  });
 
 export const useVoicemail = () =>
   useQuery({

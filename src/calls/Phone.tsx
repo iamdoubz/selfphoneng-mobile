@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // The phone (spec 13 MB4): the keypad tab, and the call in progress over every tab. Incoming
 // calls also show on the system's own call screen.
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { Pressable, StyleSheet, Text, View, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -123,6 +124,13 @@ export function Keypad() {
   const startError = usePhoneError((s) => s.error);
   const [number, setNumber] = useState('');
   const [dialError, setError] = useState('');
+  // A tel: link from another app (+native-intent): filled in, waiting for a tap, never dialed.
+  const linked = useLocalSearchParams<{ number?: string }>().number;
+  const [seen, setSeen] = useState<string>();
+  if (linked && linked !== seen) {
+    setSeen(linked);
+    setNumber(linked.replace(/[^0-9*#+]/g, ''));
+  }
   const error = dialError || startError;
   const ready = state.reg === 'registered';
   return (
