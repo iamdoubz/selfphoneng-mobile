@@ -6,7 +6,7 @@
     "scheme": "selfphoneng",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
+    "userInterfaceStyle": "automatic",
     "ios": {
       "bundleIdentifier": "bet.dou.selfphoneng",
       "supportsTablet": true
@@ -48,7 +48,8 @@
           "microphonePermission": "$(PRODUCT_NAME) uses the microphone for your phone calls.",
           "cameraPermission": "$(PRODUCT_NAME) uses the camera to scan the pairing QR code."
         }
-      ]
+      ],
+      "expo-audio"
     ]
   }
 }
