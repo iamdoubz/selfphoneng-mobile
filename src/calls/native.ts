@@ -44,6 +44,26 @@ const uuid = () =>
 
 const quiet = (p: Promise<unknown>) => void p.catch(() => undefined);
 
+/** Resolves once registered with the PBX; rejects after `ms` (offline, or no extension). */
+function registered(ms = 20_000): Promise<void> {
+  if (phone.state.reg === 'registered') return Promise.resolve();
+  return new Promise((resolve, reject) => {
+    const stop = phone.subscribe(() => {
+      if (phone.state.reg !== 'registered') return;
+      done();
+      resolve();
+    });
+    const timer = setTimeout(() => {
+      done();
+      reject(new Error('Not connected'));
+    }, ms);
+    const done = () => {
+      stop();
+      clearTimeout(timer);
+    };
+  });
+}
+
 let wired = false;
 /** Once: the engine's events to the system, and the system's to the engine. */
 function wire() {
@@ -123,6 +143,14 @@ function wire() {
   Calls.addDTMFListener(({ id, digits }) => {
     const sipId = sipOf.get(id);
     if (sipId) for (const d of digits) phone.dtmf(sipId, d);
+  });
+
+  // A call started outside the app: one of ours tapped in the phone's Recents, or Siri ("call
+  // Jane with SelfPhoneNG"). The system holds it until this listener exists; the app may just
+  // have opened for it, so wait for the PBX first.
+  Calls.addCallIntentReceivedListener(({ handle }) => {
+    const number = handle.replace(/[^0-9*#+]/g, '');
+    if (number) quiet(registered().then(() => callActions.dial(number)));
   });
 
   // Back in the app after a while: the connection was dropped while it slept.

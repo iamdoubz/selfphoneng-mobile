@@ -19,7 +19,28 @@
         "backgroundImage": "./assets/android-icon-background.png",
         "monochromeImage": "./assets/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "blockedPermissions": ["android.permission.WRITE_CONTACTS"],
+      "intentFilters": [
+        {
+          "action": "DIAL",
+          "data": [
+            {
+              "scheme": "tel"
+            }
+          ],
+          "category": ["DEFAULT"]
+        },
+        {
+          "action": "VIEW",
+          "data": [
+            {
+              "scheme": "tel"
+            }
+          ],
+          "category": ["DEFAULT", "BROWSABLE"]
+        }
+      ]
     },
     "plugins": [
       "expo-router",
@@ -49,7 +70,13 @@
           "cameraPermission": "$(PRODUCT_NAME) uses the camera to scan the pairing QR code."
         }
       ],
-      "expo-audio"
+      "expo-audio",
+      [
+        "expo-contacts",
+        {
+          "contactsPermission": "$(PRODUCT_NAME) reads your contacts when you import them into SelfPhoneNG."
+        }
+      ]
     ]
   }
 }

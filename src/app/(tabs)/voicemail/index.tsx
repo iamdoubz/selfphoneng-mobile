@@ -2,7 +2,7 @@
 // Voicemail (spec 13 MB6): the list, play (which marks it heard), the transcript, call back, delete.
 import type { VoicemailDto } from '@selfphoneng/shared';
 import { useQueryClient } from '@tanstack/react-query';
-import { useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
+import { setAudioModeAsync, useAudioPlayer, useAudioPlayerStatus } from 'expo-audio';
 import { Stack } from 'expo-router';
 import { useEffect, useState } from 'react';
 import {
@@ -16,13 +16,30 @@ import {
 } from 'react-native';
 import { api } from '../../../api';
 import { dial } from '../../../calls/Phone';
-import { unheard, useNames, useVoicemail } from '../../../data';
+import { phone } from '../../../calls/engine';
+import { unheard, useContactOf, useVoicemail } from '../../../data';
 import { useSession } from '../../../session';
+import { Avatar } from '../../../ui/Avatar';
 import { duration, phoneNumber, when } from '../../../ui/format';
 import { Empty, Icon, usePullRefresh } from '../../../ui/List';
 import { radius, space, useColors } from '../../../ui/theme';
 
 const message = (e: unknown) => (e instanceof Error ? e.message : String(e));
+
+/**
+ * Voicemail plays like a call: at the ear, or on the loudspeaker. iPhone needs the play-and-record
+ * session for the earpiece (it plays nothing it isn't told where to), and both ignore the
+ * silent switch, as the Phone app's voicemail does. A call owns the session: leave it be then.
+ */
+const route = (speaker: boolean) =>
+  phone.state.call
+    ? Promise.resolve()
+    : setAudioModeAsync({
+        playsInSilentMode: true,
+        allowsRecording: true,
+        shouldRouteThroughEarpiece: !speaker,
+        interruptionMode: 'doNotMix',
+      });
 
 /** Mounted only for the open message, so one player at a time. */
 function Player({ vm, onError }: { vm: VoicemailDto; onError: (m: string) => void }) {
@@ -34,13 +51,35 @@ function Player({ vm, onError }: { vm: VoicemailDto; onError: (m: string) => voi
     headers: { authorization: `Bearer ${session.token}` },
   });
   const status = useAudioPlayerStatus(player);
+  const [speaker, setSpeaker] = useState(false);
   const total = status.duration || vm.durationS;
   const at = Math.min(status.currentTime, total);
   useEffect(() => {
     if (status.didJustFinish) void player.seekTo(0);
   }, [status.didJustFinish, player]);
-  const toggle = () => {
+  // Closed: back to a plain player, so Android leaves its in-call audio mode.
+  useEffect(
+    () => () =>
+      void (phone.state.call
+        ? undefined
+        : setAudioModeAsync({
+            allowsRecording: false,
+            shouldRouteThroughEarpiece: false,
+            interruptionMode: 'mixWithOthers',
+          }).catch(() => undefined)),
+    [],
+  );
+  const toggleSpeaker = () => {
+    setSpeaker(!speaker);
+    route(!speaker).catch((e: unknown) => onError(message(e)));
+  };
+  const toggle = async () => {
     if (status.playing) return player.pause();
+    try {
+      await route(speaker);
+    } catch (e) {
+      onError(message(e));
+    }
     player.play();
     if (unheard(vm))
       api('PATCH', `/api/me/voicemail/${vm.id}`, { folder: 'Old' }).then(
@@ -80,6 +119,20 @@ function Player({ vm, onError }: { vm: VoicemailDto; onError: (m: string) => voi
           <Text style={[styles.time, { color: c.muted }]}>-{duration(total - at)}</Text>
         </View>
       </View>
+      <Pressable
+        accessibilityRole="switch"
+        accessibilityLabel="Speaker"
+        accessibilityState={{ checked: speaker }}
+        hitSlop={12}
+        onPress={toggleSpeaker}
+        style={[styles.speaker, { backgroundColor: speaker ? c.tint : c.fill }]}
+      >
+        <Icon
+          name={{ ios: 'speaker.wave.2.fill', android: 'volume_up' }}
+          size={18}
+          color={speaker ? '#ffffff' : c.tint}
+        />
+      </Pressable>
     </View>
   );
 }
@@ -87,11 +140,13 @@ function Player({ vm, onError }: { vm: VoicemailDto; onError: (m: string) => voi
 function Message({
   vm,
   name,
+  photo,
   open,
   onOpen,
 }: {
   vm: VoicemailDto;
   name: string | null;
+  photo: string | null;
   open: boolean;
   onOpen: () => void;
 }) {
@@ -122,6 +177,7 @@ function Message({
         style={styles.head}
       >
         <View style={[styles.dot, { backgroundColor: unheard(vm) ? c.tint : 'transparent' }]} />
+        <Avatar name={title} photo={photo} size={40} />
         <View style={styles.headText}>
           <Text numberOfLines={1} style={[styles.name, { color: c.text }]}>
             {title}
@@ -179,7 +235,7 @@ export default function Voicemail() {
   const c = useColors();
   const q = useVoicemail();
   const refresh = usePullRefresh(q.refetch);
-  const names = useNames();
+  const contactOf = useContactOf();
   const [open, setOpen] = useState<string | null>(null);
   return (
     <>
@@ -190,14 +246,18 @@ export default function Voicemail() {
         contentContainerStyle={styles.list}
         data={q.data?.items ?? []}
         keyExtractor={(x) => x.id}
-        renderItem={({ item }) => (
-          <Message
-            vm={item}
-            name={item.callerName ?? names(item.callerNumber)}
-            open={open === item.id}
-            onOpen={() => setOpen(open === item.id ? null : item.id)}
-          />
-        )}
+        renderItem={({ item }) => {
+          const who = contactOf(item.callerNumber);
+          return (
+            <Message
+              vm={item}
+              name={item.callerName ?? who?.name ?? null}
+              photo={who?.photo ?? null}
+              open={open === item.id}
+              onOpen={() => setOpen(open === item.id ? null : item.id)}
+            />
+          );
+        }}
         ListHeaderComponent={
           q.error ? (
             <Text style={[styles.error, { color: c.red }]}>{q.error.message}</Text>
@@ -232,6 +292,13 @@ const styles = StyleSheet.create({
   body: { paddingHorizontal: space.lg, paddingBottom: space.lg, gap: space.md },
   player: { flexDirection: 'row', alignItems: 'center', gap: space.md },
   track: { flex: 1, gap: space.xs },
+  speaker: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
   bar: { height: 4, borderRadius: 2, overflow: 'hidden' },
   fill: { height: 4 },
   times: { flexDirection: 'row', justifyContent: 'space-between' },
